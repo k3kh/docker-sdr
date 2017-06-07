@@ -1,0 +1,162 @@
+version: '2'
+
+volumes:
+  fcrepo:
+  solr:
+  redis:
+  db:
+  zk1:
+  zkconf:
+  stacks:
+  purl:
+  dor:
+  sdr:
+
+services:
+  zookeeper:
+    image: zookeeper
+    restart: always
+    environment:
+      - ZOO_MY_ID=1
+      - ZOO_SERVERS=server.1=zoo1:2888:3888
+    expose:
+      - 2181
+    volumes:
+      - zk1:/data
+      - zkconf:/conf
+
+  solr:
+    image: solr
+    command: solr -c -f -z zookeeper:2181
+    depends_on:
+      - zookeeper
+    expose:
+      - 8983
+    volumes:
+      - solr:/data
+
+  fcrepo:
+    build: ./fcrepo/
+    expose:
+      - 8080
+    depends_on:
+      - db
+      - karaf
+    volumes:
+      - fcrepo:/data
+
+  db:
+    image: postgres
+    volumes:
+      - db:/var/lib/postgresql/data
+
+  redis:
+    image: redis:3
+    command: redis-server
+    ports:
+      - 6379
+    volumes:
+      - redis:/data
+
+  karaf:
+    image: mkroli/karaf:4.1
+
+  suri:
+    build: ./suri/
+    depends_on:
+      - db
+  
+  workflow-service:
+    build: ./workflow-service/
+    depends_on:
+      - db
+    
+  workflow-archiver-service:
+    build: ./workflow-archiver-service/
+    depends_on:
+      - db
+
+  dor-services-app:
+    build: ./dor-services-app
+    depends_on:
+      - fcrepo
+      - solr
+      - suri
+      - workflow-service
+    volumes:
+      - dor:/dor
+    
+  sdr-services-app:
+    build: ./sdr-services-app
+    volumes:
+      - sdr:/sdr
+    
+  dor-indexing-app:
+    build: ./dor-indexing-app
+    depends_on:
+      - fcrepo
+      - solr
+  
+  argo:
+    build: ./argo/
+    depends_on:
+      - dor-services-app
+      - modsulator-app
+      - db
+      - suri
+    
+  modsulator-app:
+    build: ./modsulator-app
+
+  hydrus:
+    build: ./hydrus/
+    depends_on:
+      - dor-services-app
+      - suri
+      - db
+    
+  etds:
+    build: ./etds/
+    depends_on:
+      - fcrepo
+      - solr
+      - suri
+      - db
+
+  stacks:
+    build: ./stacks/
+    depends_on:
+      - purl
+    volumes:
+      - stacks:/stacks
+    
+  purl:
+    build: ./purl/
+    volumes:
+      - purl:/purl
+    
+  discovery-dispatcher:
+    build: ./discovery-dispatcher
+    
+  robots:
+    build: ./robots/
+    depends_on:
+      - redis
+      - fcrepo
+      - solr
+      - dor-services-app
+    volumes:
+      - dor:/dor
+    
+  robot-master:
+    build: ./robot-master/
+    depends_on:
+      - redis
+    
+  sdr-preservation-core-robots:
+    build: ./sdr-preservation-core-robots
+    volumes:
+      - sdr:/sdr
+
+  catalog-service:
+    build: ./catalog-service
