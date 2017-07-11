@@ -1,7 +1,8 @@
 version: '2'
 
 volumes:
-  fcrepo:
+  fcrepo-ds:
+  fcrepo-obj:
   solr:
   redis:
   db:
@@ -40,10 +41,10 @@ services:
     expose:
       - 8080
     depends_on:
-      - db
       - karaf
     volumes:
-      - fcrepo:/data
+      - fcrepo-obj:/usr/local/fedora/data/datastreamStore
+      - fcrepo-ds:/usr/local/fedora/data/objectStore
 
   db:
     image: postgres
