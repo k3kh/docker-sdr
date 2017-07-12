@@ -135,6 +135,9 @@ services:
     build: ./purl/
     volumes:
       - purl:/purl
+      
+  sul-embed:
+    build: ./sul-embed
     
   discovery-dispatcher:
     build: ./discovery-dispatcher
