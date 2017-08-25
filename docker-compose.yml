@@ -67,7 +67,8 @@ services:
     build: ./suri/
     depends_on:
       - db
-  
+
+  # needs db config
   workflow-service:
     build: ./workflow-service/
     depends_on:
