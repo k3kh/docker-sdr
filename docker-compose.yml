@@ -62,6 +62,7 @@ services:
   karaf:
     image: mkroli/karaf:4.1
 
+  # needs db config
   suri:
     build: ./suri/
     depends_on:
