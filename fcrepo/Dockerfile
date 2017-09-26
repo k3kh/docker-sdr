@@ -13,6 +13,6 @@ RUN  curl -sL  "$FCREPO_DOWNLOAD_URL" -o fedora-install.jar
 
 ADD fedora-install.properties /tmp/fedora-install.properties
 RUN  java -jar fedora-install.jar /tmp/fedora-install.properties
-
+ENV JAVA_OPTS "-Xmx 1g"
 RUN unzip $CATALINA_HOME/webapps/fedora.war -d $CATALINA_HOME/webapps/fedora && \
     rm $CATALINA_HOME/webapps/fedora.war

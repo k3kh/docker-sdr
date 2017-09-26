@@ -59,28 +59,32 @@ services:
     volumes:
       - redis:/data
 
+  # todo: install our indexing logic
   karaf:
     image: mkroli/karaf:4.1
 
-  # needs db config
   suri:
     build: ./suri/
+    environment:
+      DATABASE_URL: postgres://db:5432/suri
     depends_on:
       - db
 
   # needs db config
   workflow-service:
     build: ./workflow-service/
-    depends_on:
-      - db
-    
-  workflow-archiver-service:
-    build: ./workflow-archiver-service/
+    environment:
+      DATABASE_URL: postgres://db:5432/workflow-service
     depends_on:
       - db
 
+  # workflow-archiver-service:
+  #   build: ./workflow-archiver-service/
+  #   depends_on:
+  #     - db
+
   dor-services-app:
-    build: ./dor-services-app
+    build: ./dor-services-app/
     depends_on:
       - fcrepo
       - solr
@@ -88,43 +92,55 @@ services:
       - workflow-service
     volumes:
       - dor:/dor
-    
-  sdr-services-app:
-    build: ./sdr-services-app
-    volumes:
-      - sdr:/sdr
-    
+
+  # oci8 dependency..
+  # sdr-services-app:
+  #   build: ./sdr-services-app/
+  #   volumes:
+  #     - sdr:/sdr
+
   dor-indexing-app:
-    build: ./dor-indexing-app
+    build: ./dor-indexing-app/
     depends_on:
       - fcrepo
       - solr
-  
+
   argo:
     build: ./argo/
+    environment:
+      DATABASE_URL: postgres://db:5432/argo
     depends_on:
       - dor-services-app
       - modsulator-app
       - db
       - suri
-    
+
   modsulator-app:
-    build: ./modsulator-app
+    build: ./modsulator-app/
 
   hydrus:
     build: ./hydrus/
+    environment:
+      DATABASE_URL: postgres://db:5432/hydrus
     depends_on:
       - dor-services-app
       - suri
       - db
-    
-  etds:
-    build: ./etds/
+
+  # etds:
+  #   build: ./etds/
+  #   depends_on:
+  #     - fcrepo
+  #     - solr
+  #     - suri
+  #     - db
+
+  image-server:
+    build: ./image-server/
     depends_on:
-      - fcrepo
-      - solr
-      - suri
-      - db
+      - purl
+    volumes:
+      - stacks:/stacks
 
   stacks:
     build: ./stacks/
@@ -132,37 +148,47 @@ services:
       - purl
     volumes:
       - stacks:/stacks
-    
+
   purl:
     build: ./purl/
     volumes:
       - purl:/purl
-      
+
+  purl-fetcher:
+    build: ./purl-fetcher/
+    environment:
+      DATABASE_URL: postgres://db:5432/purl-fetcher
+    volumes:
+      - purl:/purl
+
   sul-embed:
     build: ./sul-embed
-    
-  discovery-dispatcher:
-    build: ./discovery-dispatcher
-    
-  robots:
-    build: ./robots/
-    depends_on:
-      - redis
-      - fcrepo
-      - solr
-      - dor-services-app
-    volumes:
-      - dor:/dor
-    
-  robot-master:
-    build: ./robot-master/
-    depends_on:
-      - redis
-    
-  sdr-preservation-core-robots:
-    build: ./sdr-preservation-core-robots
-    volumes:
-      - sdr:/sdr
 
-  catalog-service:
-    build: ./catalog-service
+  discovery-dispatcher:
+    build: ./discovery-dispatcher/
+    environment:
+      DATABASE_URL: postgres://db:5432/discovery-dispatcher
+    depends_on:
+      - purl-fetcher
+
+  # robots:
+  #   build: ./robots/
+  #   depends_on:
+  #     - redis
+  #     - fcrepo
+  #     - solr
+  #     - dor-services-app
+  #   volumes:
+  #     - dor:/dor
+  #
+  # robot-master:
+  #   build: ./robot-master/
+  #   depends_on:
+  #     - redis
+  #
+  # sdr-preservation-core-robots:
+  #   build: ./sdr-preservation-core-robots
+  #   volumes:
+  #     - sdr:/sdr
+  # catalog-service:
+  #   build: ./catalog-service
