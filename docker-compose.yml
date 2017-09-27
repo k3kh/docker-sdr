@@ -99,8 +99,14 @@ services:
   #   volumes:
   #     - sdr:/sdr
 
-  dor-indexing-app:
-    build: ./dor-indexing-app/
+  dor_indexing_app:
+    build: ./dor_indexing_app/
+    environment:
+      SETTINGS__DOR_SERVICES_URL:
+      SETTINGS__FEDORA_URL:
+      SETTINGS__SOLRIZER_URL:
+      SETTINGS__WORKFLOW_URL:
+
     depends_on:
       - fcrepo
       - solr
@@ -109,6 +115,18 @@ services:
     build: ./argo/
     environment:
       DATABASE_URL: postgres://db:5432/argo
+      SOLR_URL: # TODO
+      SETTINGS__DOR_SERVICES_URL:
+      SETTINGS__DOR_INDEXING_URL:
+      SETTINGS__FEDORA_URL:
+      SETTINGS__MODSULATOR_URL:
+      SETTINGS__NORMALIZER_URL:
+      SETTINGS__PURL_URL:
+      SETTINGS__SOLRIZER_URL:
+      SETTINGS__STACKS_FILE_URL:
+      SETTINGS__STACKS_URL:
+      SETTINGS__WORKFLOW_URL:
+      SETTINGS__SURI__URL:
     depends_on:
       - dor-services-app
       - modsulator-app
@@ -137,13 +155,17 @@ services:
 
   image-server:
     build: ./image-server/
-    depends_on:
-      - purl
     volumes:
       - stacks:/stacks
 
   stacks:
     build: ./stacks/
+    environment:
+      SETTINGS__STACKS__STORAGE_ROOT: /stacks
+      SETTINGS__PURL__URL: http://purl/
+      SETTINGS__CORS__ALLOW_ORIGIN_URL: http://embed/
+      SETTINGS__STACKS__REMOTE_IIIF__IMAGE__ATTRIBUTES__BASE_URI: 'http://image-server/iiif/2/'
+      SETTINGS__STACKS__REMOTE_IIIF__METADATA__ATTRIBUTES__BASE_URI: 'http://image-server/iiif/2/'
     depends_on:
       - purl
     volumes:
@@ -151,6 +173,14 @@ services:
 
   purl:
     build: ./purl/
+    environment:
+      SETTINGS__DOCUMENT_CACHE_ROOT: /purl
+      SETTINGS__PURL_RESOURCE__MODS: /purl/%{druid_tree}/mods
+      SETTINGS__PURL_RESOURCE__MODS: /purl/%{druid_tree}/public
+      SETTINGS__STACKS__URL: http://stacks/
+      SETTINGS__EMBED__URL: http://embed/%{druid}
+      SETTINGS__EMBED__URL_TEMPLATE: http://embed/{?format,url*,application_options*}
+      SETTINGS__EMBED__IFRAME__URL_TEMPLATE: http://embed/iframe{?url*}
     volumes:
       - purl:/purl
 
@@ -163,6 +193,17 @@ services:
 
   sul-embed:
     build: ./sul-embed
+    environment:
+      SETTINGS__PURL_URL: http://purl/
+      SETTINGS__VALID_PURL_URL: # TODO...
+      SETTINGS__STACKS_URL: http://stacks/
+      SETTINGS__EMBED_IFRAME_URL: http://embed/iframe
+      SETTINGS__GEO_EXTERNAL_URL: # TODO
+      SETTINGS__GEO_WMS_URL: # TODO
+      SETTINGS__WAS_THUMBS_URL: # TODO
+
+    depends_on:
+      - purl
 
   discovery-dispatcher:
     build: ./discovery-dispatcher/
