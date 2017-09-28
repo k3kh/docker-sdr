@@ -29,6 +29,8 @@ services:
   solr:
     image: solr
     command: solr -c -f -z zookeeper:2181
+    environment:
+      VIRTUAL_HOST: solr.localtest.me
     depends_on:
       - zookeeper
     expose:
@@ -40,6 +42,8 @@ services:
     build: ./fcrepo/
     expose:
       - 8080
+    environment:
+      VIRTUAL_HOST: fcrepo.localtest.me
     depends_on:
       - karaf
     volumes:
@@ -67,6 +71,7 @@ services:
     build: ./suri/
     environment:
       DATABASE_URL: postgres://db:5432/suri
+      VIRTUAL_HOST: suri.localtest.me
     depends_on:
       - db
 
@@ -74,6 +79,7 @@ services:
   workflow-service:
     build: ./workflow-service/
     environment:
+      VIRTUAL_HOST: workflow-service.localtest.me
       DATABASE_URL: postgres://db:5432/workflow-service
     depends_on:
       - db
@@ -85,6 +91,8 @@ services:
 
   dor-services-app:
     build: ./dor-services-app/
+    environment:
+      VIRTUAL_HOST: dor-services-app.localtest.me
     depends_on:
       - fcrepo
       - solr
@@ -106,7 +114,7 @@ services:
       SETTINGS__FEDORA_URL:
       SETTINGS__SOLRIZER_URL:
       SETTINGS__WORKFLOW_URL:
-
+      VIRTUAL_HOST: dor_indexing_app.localtest.me
     depends_on:
       - fcrepo
       - solr
@@ -127,6 +135,7 @@ services:
       SETTINGS__STACKS_URL:
       SETTINGS__WORKFLOW_URL:
       SETTINGS__SURI__URL:
+      VIRTUAL_HOST: argo.localtest.me
     depends_on:
       - dor-services-app
       - modsulator-app
@@ -135,11 +144,14 @@ services:
 
   modsulator-app:
     build: ./modsulator-app/
+    environment:
+      VIRTUAL_HOST: modsulator-app.localtest.me
 
   hydrus:
     build: ./hydrus/
     environment:
       DATABASE_URL: postgres://db:5432/hydrus
+      VIRTUAL_HOST: hydrus.localtest.me
     depends_on:
       - dor-services-app
       - suri
@@ -155,6 +167,7 @@ services:
 
   image-server:
     build: ./image-server/
+    VIRTUAL_HOST: image-server.localtest.me
     volumes:
       - stacks:/stacks
 
@@ -166,6 +179,7 @@ services:
       SETTINGS__CORS__ALLOW_ORIGIN_URL: http://embed/
       SETTINGS__STACKS__REMOTE_IIIF__IMAGE__ATTRIBUTES__BASE_URI: 'http://image-server/iiif/2/'
       SETTINGS__STACKS__REMOTE_IIIF__METADATA__ATTRIBUTES__BASE_URI: 'http://image-server/iiif/2/'
+      VIRTUAL_HOST: stacks.localtest.me
     depends_on:
       - purl
     volumes:
@@ -177,10 +191,11 @@ services:
       SETTINGS__DOCUMENT_CACHE_ROOT: /purl
       SETTINGS__PURL_RESOURCE__MODS: /purl/%{druid_tree}/mods
       SETTINGS__PURL_RESOURCE__MODS: /purl/%{druid_tree}/public
-      SETTINGS__STACKS__URL: http://stacks/
-      SETTINGS__EMBED__URL: http://embed/%{druid}
-      SETTINGS__EMBED__URL_TEMPLATE: http://embed/{?format,url*,application_options*}
-      SETTINGS__EMBED__IFRAME__URL_TEMPLATE: http://embed/iframe{?url*}
+      SETTINGS__STACKS__URL: http://stacks.localtest.me/
+      SETTINGS__EMBED__URL: http://sul-embed.localtest.me/%{druid}
+      SETTINGS__EMBED__URL_TEMPLATE: http://sul-embed.localtest.me/{?format,url*,application_options*}
+      SETTINGS__EMBED__IFRAME__URL_TEMPLATE: http://sul-embed.localtest.me/iframe{?url*}
+      VIRTUAL_HOST: purl.localtest.me
     volumes:
       - purl:/purl
 
@@ -188,6 +203,7 @@ services:
     build: ./purl-fetcher/
     environment:
       DATABASE_URL: postgres://db:5432/purl-fetcher
+      VIRTUAL_HOST: purl-fetcher.localtest.me
     volumes:
       - purl:/purl
 
@@ -201,6 +217,7 @@ services:
       SETTINGS__GEO_EXTERNAL_URL: # TODO
       SETTINGS__GEO_WMS_URL: # TODO
       SETTINGS__WAS_THUMBS_URL: # TODO
+      VIRTUAL_HOST: sul-embed.localtest.me
 
     depends_on:
       - purl
@@ -209,8 +226,16 @@ services:
     build: ./discovery-dispatcher/
     environment:
       DATABASE_URL: postgres://db:5432/discovery-dispatcher
+      VIRTUAL_HOST: discovery-dispatcher.localtest.me
     depends_on:
       - purl-fetcher
+
+  nginx-proxy:
+    image: jwilder/nginx-proxy
+    ports:
+      - "80:80"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
 
   # robots:
   #   build: ./robots/
@@ -221,6 +246,8 @@ services:
   #     - dor-services-app
   #   volumes:
   #     - dor:/dor
+  #     - stacks:/stacks
+  #     - purl:/purl
   #
   # robot-master:
   #   build: ./robot-master/
@@ -231,5 +258,9 @@ services:
   #   build: ./sdr-preservation-core-robots
   #   volumes:
   #     - sdr:/sdr
+  #
   # catalog-service:
   #   build: ./catalog-service
+  #
+  # preassembly:
+  #   build: ./preassembly
