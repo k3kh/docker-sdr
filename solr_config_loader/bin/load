@@ -1,0 +1,12 @@
+#!/bin/bash
+
+until $(curl --output /dev/null --silent --head --fail http://solr:8983/solr); do
+    printf '.'
+    sleep 5
+done
+
+(cd /app/solr_config_loader/configs/argo && zip -r - *) | curl -X POST --header "Content-Type:application/octet-stream" --data-binary @- "http://solr:8983/solr/admin/configs?action=UPLOAD&name=argo"
+(cd /app/solr_config_loader/configs/hydrus && zip -r - *) | curl -X POST --header "Content-Type:application/octet-stream" --data-binary @- "http://solr:8983/solr/admin/configs?action=UPLOAD&name=hydrus"
+
+curl "http://solr:8983/solr/admin/collections?action=CREATE&name=argo&numShards=1&collection.configName=argo"
+curl "http://solr:8983/solr/admin/collections?action=CREATE&name=hydrus&numShards=1&collection.configName=hydrus"

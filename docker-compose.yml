@@ -38,6 +38,14 @@ services:
     volumes:
       - solr:/data
 
+  solr_config_loader:
+    image: phusion/passenger-ruby24
+    command: /app/solr_config_loader/bin/load
+    depends_on:
+      - solr
+    volumes:
+      - ./:/app
+
   fcrepo:
     build: ./fcrepo/
     expose:
@@ -92,6 +100,7 @@ services:
   dor-services-app:
     build: ./dor-services-app/
     environment:
+      SETTINGS__SOLRIZER_URL: http://solr:8983/solr/argo
       VIRTUAL_HOST: dor-services-app.${VIRTUAL_HOST_DOMAIN}
     depends_on:
       - fcrepo
@@ -112,7 +121,7 @@ services:
     environment:
       SETTINGS__DOR_SERVICES_URL:
       SETTINGS__FEDORA_URL:
-      SETTINGS__SOLRIZER_URL:
+      SETTINGS__SOLRIZER_URL: http://solr:8983/solr/argo
       SETTINGS__WORKFLOW_URL:
       VIRTUAL_HOST: dor_indexing_app.${VIRTUAL_HOST_DOMAIN}
     depends_on:
@@ -123,14 +132,14 @@ services:
     build: ./argo/
     environment:
       DATABASE_URL: postgres://postgres@db:5432/argo
-      SOLR_URL: # TODO
+      SOLR_URL: http://solr:8983/solr/argo # TODO
       SETTINGS__DOR_SERVICES_URL:
       SETTINGS__DOR_INDEXING_URL:
       SETTINGS__FEDORA_URL:
       SETTINGS__MODSULATOR_URL:
       SETTINGS__NORMALIZER_URL:
       SETTINGS__PURL_URL:
-      SETTINGS__SOLRIZER_URL:
+      SETTINGS__SOLRIZER_URL: http://solr:8983/solr/argo
       SETTINGS__STACKS_FILE_URL:
       SETTINGS__STACKS_URL:
       SETTINGS__WORKFLOW_URL:
@@ -152,6 +161,7 @@ services:
     environment:
       DATABASE_URL: postgres://postgres@db:5432/hydrus
       VIRTUAL_HOST: hydrus.${VIRTUAL_HOST_DOMAIN}
+      SOLR_URL: http://solr:8983/solr/hydrus
     depends_on:
       - dor-services-app
       - suri
