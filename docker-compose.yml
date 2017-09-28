@@ -177,7 +177,7 @@ services:
     environment:
       SETTINGS__STACKS__STORAGE_ROOT: /stacks
       SETTINGS__PURL__URL: http://purl/
-      SETTINGS__CORS__ALLOW_ORIGIN_URL: http://embed/
+      SETTINGS__CORS__ALLOW_ORIGIN_URL: http://sul-embed.${VIRTUAL_HOST_DOMAIN}/
       SETTINGS__STACKS__REMOTE_IIIF__IMAGE__ATTRIBUTES__BASE_URI: 'http://image-server/iiif/2/'
       SETTINGS__STACKS__REMOTE_IIIF__METADATA__ATTRIBUTES__BASE_URI: 'http://image-server/iiif/2/'
       VIRTUAL_HOST: stacks.${VIRTUAL_HOST_DOMAIN}
@@ -211,10 +211,10 @@ services:
   sul-embed:
     build: ./sul-embed
     environment:
-      SETTINGS__PURL_URL: http://purl/
+      SETTINGS__PURL_URL: http://purl.${VIRTUAL_HOST_DOMAIN}/
       SETTINGS__VALID_PURL_URL: # TODO...
-      SETTINGS__STACKS_URL: http://stacks/
-      SETTINGS__EMBED_IFRAME_URL: http://embed/iframe
+      SETTINGS__STACKS_URL: http://stacks.${VIRTUAL_HOST_DOMAIN}/
+      SETTINGS__EMBED_IFRAME_URL: http://sul-embed.${VIRTUAL_HOST_DOMAIN}/iframe
       SETTINGS__GEO_EXTERNAL_URL: # TODO
       SETTINGS__GEO_WMS_URL: # TODO
       SETTINGS__WAS_THUMBS_URL: # TODO
