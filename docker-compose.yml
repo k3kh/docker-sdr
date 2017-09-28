@@ -101,6 +101,10 @@ services:
     build: ./dor-services-app/
     environment:
       SETTINGS__SOLRIZER_URL: http://solr:8983/solr/argo
+      SETTINGS__SURI__URL: http://suri
+      SETTINGS__WORKFLOW_URL: http://workflow-service/
+      SETTINGS__SDR_URL: http://sdr-services-app/
+      SETTINGS__CONTENT__SDR_SERVER_URL: http://sdr-services-app/
       VIRTUAL_HOST: dor-services-app.${VIRTUAL_HOST_DOMAIN}
     depends_on:
       - fcrepo
