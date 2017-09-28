@@ -30,7 +30,7 @@ services:
     image: solr
     command: solr -c -f -z zookeeper:2181
     environment:
-      VIRTUAL_HOST: solr.localtest.me
+      VIRTUAL_HOST: solr.${VIRTUAL_HOST_DOMAIN}
     depends_on:
       - zookeeper
     expose:
@@ -43,7 +43,7 @@ services:
     expose:
       - 8080
     environment:
-      VIRTUAL_HOST: fcrepo.localtest.me
+      VIRTUAL_HOST: fcrepo.${VIRTUAL_HOST_DOMAIN}
     depends_on:
       - karaf
     volumes:
@@ -71,7 +71,7 @@ services:
     build: ./suri/
     environment:
       DATABASE_URL: postgres://db:5432/suri
-      VIRTUAL_HOST: suri.localtest.me
+      VIRTUAL_HOST: suri.${VIRTUAL_HOST_DOMAIN}
     depends_on:
       - db
 
@@ -79,7 +79,7 @@ services:
   workflow-service:
     build: ./workflow-service/
     environment:
-      VIRTUAL_HOST: workflow-service.localtest.me
+      VIRTUAL_HOST: workflow-service.$VIRTUAL_HOST_DOMAIN
       DATABASE_URL: postgres://db:5432/workflow-service
     depends_on:
       - db
@@ -92,7 +92,7 @@ services:
   dor-services-app:
     build: ./dor-services-app/
     environment:
-      VIRTUAL_HOST: dor-services-app.localtest.me
+      VIRTUAL_HOST: dor-services-app.${VIRTUAL_HOST_DOMAIN}
     depends_on:
       - fcrepo
       - solr
@@ -114,7 +114,7 @@ services:
       SETTINGS__FEDORA_URL:
       SETTINGS__SOLRIZER_URL:
       SETTINGS__WORKFLOW_URL:
-      VIRTUAL_HOST: dor_indexing_app.localtest.me
+      VIRTUAL_HOST: dor_indexing_app.${VIRTUAL_HOST_DOMAIN}
     depends_on:
       - fcrepo
       - solr
@@ -135,7 +135,7 @@ services:
       SETTINGS__STACKS_URL:
       SETTINGS__WORKFLOW_URL:
       SETTINGS__SURI__URL:
-      VIRTUAL_HOST: argo.localtest.me
+      VIRTUAL_HOST: argo.${VIRTUAL_HOST_DOMAIN}
     depends_on:
       - dor-services-app
       - modsulator-app
@@ -145,13 +145,13 @@ services:
   modsulator-app:
     build: ./modsulator-app/
     environment:
-      VIRTUAL_HOST: modsulator-app.localtest.me
+      VIRTUAL_HOST: modsulator-app.${VIRTUAL_HOST_DOMAIN}
 
   hydrus:
     build: ./hydrus/
     environment:
       DATABASE_URL: postgres://db:5432/hydrus
-      VIRTUAL_HOST: hydrus.localtest.me
+      VIRTUAL_HOST: hydrus.${VIRTUAL_HOST_DOMAIN}
     depends_on:
       - dor-services-app
       - suri
@@ -167,7 +167,8 @@ services:
 
   image-server:
     build: ./image-server/
-    VIRTUAL_HOST: image-server.localtest.me
+    environment:
+      VIRTUAL_HOST: image-server.${VIRTUAL_HOST_DOMAIN}
     volumes:
       - stacks:/stacks
 
@@ -179,7 +180,7 @@ services:
       SETTINGS__CORS__ALLOW_ORIGIN_URL: http://embed/
       SETTINGS__STACKS__REMOTE_IIIF__IMAGE__ATTRIBUTES__BASE_URI: 'http://image-server/iiif/2/'
       SETTINGS__STACKS__REMOTE_IIIF__METADATA__ATTRIBUTES__BASE_URI: 'http://image-server/iiif/2/'
-      VIRTUAL_HOST: stacks.localtest.me
+      VIRTUAL_HOST: stacks.${VIRTUAL_HOST_DOMAIN}
     depends_on:
       - purl
     volumes:
@@ -191,11 +192,11 @@ services:
       SETTINGS__DOCUMENT_CACHE_ROOT: /purl
       SETTINGS__PURL_RESOURCE__MODS: /purl/%{druid_tree}/mods
       SETTINGS__PURL_RESOURCE__MODS: /purl/%{druid_tree}/public
-      SETTINGS__STACKS__URL: http://stacks.localtest.me/
-      SETTINGS__EMBED__URL: http://sul-embed.localtest.me/%{druid}
-      SETTINGS__EMBED__URL_TEMPLATE: http://sul-embed.localtest.me/{?format,url*,application_options*}
-      SETTINGS__EMBED__IFRAME__URL_TEMPLATE: http://sul-embed.localtest.me/iframe{?url*}
-      VIRTUAL_HOST: purl.localtest.me
+      SETTINGS__STACKS__URL: http://stacks.${VIRTUAL_HOST_DOMAIN}/
+      SETTINGS__EMBED__URL: http://sul-embed.${VIRTUAL_HOST_DOMAIN}/%{druid}
+      SETTINGS__EMBED__URL_TEMPLATE: http://sul-embed.${VIRTUAL_HOST_DOMAIN}/{?format,url*,application_options*}
+      SETTINGS__EMBED__IFRAME__URL_TEMPLATE: http://sul-embed.${VIRTUAL_HOST_DOMAIN}/iframe{?url*}
+      VIRTUAL_HOST: purl.${VIRTUAL_HOST_DOMAIN}
     volumes:
       - purl:/purl
 
@@ -203,7 +204,7 @@ services:
     build: ./purl-fetcher/
     environment:
       DATABASE_URL: postgres://db:5432/purl-fetcher
-      VIRTUAL_HOST: purl-fetcher.localtest.me
+      VIRTUAL_HOST: purl-fetcher.${VIRTUAL_HOST_DOMAIN}
     volumes:
       - purl:/purl
 
@@ -217,7 +218,7 @@ services:
       SETTINGS__GEO_EXTERNAL_URL: # TODO
       SETTINGS__GEO_WMS_URL: # TODO
       SETTINGS__WAS_THUMBS_URL: # TODO
-      VIRTUAL_HOST: sul-embed.localtest.me
+      VIRTUAL_HOST: sul-embed.${VIRTUAL_HOST_DOMAIN}
 
     depends_on:
       - purl
@@ -226,7 +227,7 @@ services:
     build: ./discovery-dispatcher/
     environment:
       DATABASE_URL: postgres://db:5432/discovery-dispatcher
-      VIRTUAL_HOST: discovery-dispatcher.localtest.me
+      VIRTUAL_HOST: discovery-dispatcher.${VIRTUAL_HOST_DOMAIN}
     depends_on:
       - purl-fetcher
 
