@@ -70,7 +70,7 @@ services:
   suri:
     build: ./suri/
     environment:
-      DATABASE_URL: postgres://db:5432/suri
+      DATABASE_URL: postgres://postgres@db:5432/suri
       VIRTUAL_HOST: suri.${VIRTUAL_HOST_DOMAIN}
     depends_on:
       - db
@@ -80,7 +80,7 @@ services:
     build: ./workflow-service/
     environment:
       VIRTUAL_HOST: workflow-service.$VIRTUAL_HOST_DOMAIN
-      DATABASE_URL: postgres://db:5432/workflow-service
+      DATABASE_URL: postgres://postgres@db:5432/workflow-service
     depends_on:
       - db
 
@@ -122,7 +122,7 @@ services:
   argo:
     build: ./argo/
     environment:
-      DATABASE_URL: postgres://db:5432/argo
+      DATABASE_URL: postgres://postgres@db:5432/argo
       SOLR_URL: # TODO
       SETTINGS__DOR_SERVICES_URL:
       SETTINGS__DOR_INDEXING_URL:
@@ -150,7 +150,7 @@ services:
   hydrus:
     build: ./hydrus/
     environment:
-      DATABASE_URL: postgres://db:5432/hydrus
+      DATABASE_URL: postgres://postgres@db:5432/hydrus
       VIRTUAL_HOST: hydrus.${VIRTUAL_HOST_DOMAIN}
     depends_on:
       - dor-services-app
@@ -203,7 +203,7 @@ services:
   purl-fetcher:
     build: ./purl-fetcher/
     environment:
-      DATABASE_URL: postgres://db:5432/purl-fetcher
+      DATABASE_URL: postgres://postgres@db:5432/purl-fetcher
       VIRTUAL_HOST: purl-fetcher.${VIRTUAL_HOST_DOMAIN}
     volumes:
       - purl:/purl
@@ -226,7 +226,7 @@ services:
   discovery-dispatcher:
     build: ./discovery-dispatcher/
     environment:
-      DATABASE_URL: postgres://db:5432/discovery-dispatcher
+      DATABASE_URL: postgres://postgres@db:5432/discovery-dispatcher
       VIRTUAL_HOST: discovery-dispatcher.${VIRTUAL_HOST_DOMAIN}
     depends_on:
       - purl-fetcher
