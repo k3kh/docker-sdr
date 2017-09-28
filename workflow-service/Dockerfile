@@ -22,5 +22,6 @@ RUN rails new webapp -m /tmp/template.rb
 RUN rm /etc/nginx/sites-enabled/default
 
 # WORKDIR /home/app/webapp
+# RUN echo 'gem "pg"' >> Gemfile
 # RUN bundle install
 # RUN bundle exec rake assets:precompile SECRET_KEY_BASE=asdf
