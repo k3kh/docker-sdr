@@ -13,7 +13,6 @@ ADD postgres-env.conf /etc/nginx/main.d/postgres-env.conf
 ADD webapp.conf /etc/nginx/sites-enabled/webapp.conf
 
 RUN git clone https://github.com/sul-dlss/argo.git /home/app/webapp
-RUN chown -R app /home/app/webapp
 RUN rm /etc/nginx/sites-enabled/default
 
 WORKDIR /home/app/webapp
@@ -30,3 +29,4 @@ RUN rm db/migrate/20160318203331_increase_delayed_job_column.rb
 RUN bundle config --local build.sigar '--with-cppflags="-fgnu89-inline"'
 RUN bundle install
 RUN bundle exec rake assets:precompile SECRET_KEY=asdf
+RUN chown -R app /home/app/webapp
