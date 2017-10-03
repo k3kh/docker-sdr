@@ -277,10 +277,11 @@ services:
   #     - stacks:/stacks
   #     - purl:/purl
   #
-  # robot-master:
-  #   build: ./robot-master/
-  #   depends_on:
-  #     - redis
+  robot-master:
+    build: ./robot-master/
+    depends_on:
+      - redis
+      - workflow-service
   #
   # sdr-preservation-core-robots:
   #   build: ./sdr-preservation-core-robots
