@@ -17,6 +17,15 @@ RUN chown -R app /home/app/webapp
 RUN rm /etc/nginx/sites-enabled/default
 
 WORKDIR /home/app/webapp
+
+## Local hacks
+
+# Allow us to use the postgres database
 RUN echo 'gem "pg"' >> Gemfile
+
+# Under postgres: The limit on text can be at most 1GB - 1byte.
+RUN rm db/migrate/20160318203331_increase_delayed_job_column.rb
+
+
 RUN bundle install
 RUN bundle exec rake assets:precompile SECRET_KEY=asdf
