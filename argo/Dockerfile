@@ -26,6 +26,7 @@ RUN echo 'gem "pg"' >> Gemfile
 # Under postgres: The limit on text can be at most 1GB - 1byte.
 RUN rm db/migrate/20160318203331_increase_delayed_job_column.rb
 
-
+# Workaround for https://github.com/hyperic/sigar/issues/60#issuecomment-111600492
+RUN bundle config --local build.sigar '--with-cppflags="-fgnu89-inline"'
 RUN bundle install
 RUN bundle exec rake assets:precompile SECRET_KEY=asdf

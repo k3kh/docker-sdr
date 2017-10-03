@@ -132,7 +132,7 @@ services:
       - fcrepo
       - solr
 
-  argo:
+  argo-app:
     build: ./argo/
     environment:
       DATABASE_URL: postgres://postgres@db:5432/argo
@@ -148,12 +148,24 @@ services:
       SETTINGS__STACKS_URL:
       SETTINGS__WORKFLOW_URL:
       SETTINGS__SURI__URL:
-      VIRTUAL_HOST: argo.${VIRTUAL_HOST_DOMAIN}
+
+  argo-web:
+    extends: argo-app
     depends_on:
       - dor-services-app
       - modsulator-app
       - db
       - suri
+    environment:
+      VIRTUAL_HOST: argo.${VIRTUAL_HOST_DOMAIN}
+
+  argo-workers:
+    extends: argo-app
+    command: bundle exec eye load -f config/eye/delayed_job_workers.eye
+    depends_on:
+      - dor-services-app
+      - modsulator-app
+      - db
 
   modsulator-app:
     build: ./modsulator-app/
