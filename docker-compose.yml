@@ -71,9 +71,18 @@ services:
     volumes:
       - redis:/data
 
-  # todo: install our indexing logic
   karaf:
-    image: mkroli/karaf:4.1
+    build: ./karaf/
+    environment:
+      VIRTUAL_HOST: karaf.${VIRTUAL_HOST_DOMAIN}
+      VIRTUAL_PORT: 8181
+    entrypoint: /opt/karaf/bin/karaf server
+    ports:
+      - 8181
+      - 61613
+      - 61616
+    volumes:
+      - ./karaf/deploy:/deploy
 
   suri:
     build: ./suri/

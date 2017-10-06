@@ -1,0 +1,152 @@
+<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0">
+  <camelContext id="indexing-hydrus" xmlns="http://camel.apache.org/schema/blueprint">
+    <onException useOriginalMessage="true">
+      <!-- retry 5xx exceptions -->
+      <exception>org.apache.camel.component.http4.HttpOperationFailedException</exception>
+      <onWhen>
+        <simple>${exception.statusCode} >= 500</simple>
+      </onWhen>
+      <redeliveryPolicy maximumRedeliveries="10" useExponentialBackOff="true"/>
+      <handled>
+         <constant>true</constant>
+      </handled>
+      <setHeader headerName="exceptionMessage">
+        <simple>${exception.message}</simple>
+      </setHeader>
+      <to uri="activemq:queue:hydrus.ReindexQueueExceptions" />
+    </onException>
+    <onException useOriginalMessage="true">
+      <!-- drop other status on the floor -->
+      <exception>org.apache.camel.component.http4.HttpOperationFailedException</exception>
+      <onWhen>
+        <simple>${exception.statusCode} &lt; 500</simple>
+      </onWhen>
+      <handled>
+         <constant>true</constant>
+      </handled>
+    </onException>
+    <onException useOriginalMessage="true">
+      <exception>java.util.concurrent.RejectedExecutionException</exception>
+      <redeliveryPolicy maximumRedeliveries="-1" redeliveryDelay="60000"/>
+      <handled>
+         <constant>true</constant>
+      </handled>
+      <setHeader headerName="exceptionMessage">
+        <simple>${exception.message}</simple>
+      </setHeader>
+      <to uri="activemq:queue:hydrus.ReindexQueueExceptions" />
+    </onException>
+
+    <route id="aggregate_object_changed_messages">
+      <from uri="activemq:queue:Consumer.hydrus.VirtualTopic.dor.object.changed?maxConcurrentConsumers=4&amp;concurrentConsumers=4" />
+      <setHeader headerName="pid">
+        <simple>${header.pid}</simple>
+      </setHeader>
+
+      <choice>
+        <when>
+          <!-- Give priority to Argo messages; send its messages within 1 second -->
+          <simple>${header.JMSPriority} > 4</simple>
+          <setHeader headerName="timeout">
+            <simple>1000</simple>
+          </setHeader>
+        </when>
+        <otherwise>
+          <!-- Otherwise we can just wait up to 30 seconds -->
+          <setHeader headerName="timeout">
+            <simple>30000</simple>
+          </setHeader>
+        </otherwise>
+      </choice>
+
+      <aggregate strategyRef="aggregatorStrategy">
+        <correlationExpression>
+          <simple>${header.pid}</simple>
+        </correlationExpression>
+        <completionTimeout>
+          <header>timeout</header>
+        </completionTimeout>
+        <to uri="activemq:hydrus.ReindexQueue?preserveMessageQos=true" />
+      </aggregate>
+    </route>
+
+    <route id="send_object_purged_messages">
+      <from uri="activemq:queue:Consumer.hydrus.VirtualTopic.dor.object.purged?maxConcurrentConsumers=4&amp;concurrentConsumers=4" />
+
+      <!-- Recommended to avoid information leakage -->
+      <removeHeaders pattern="Camel*"/>
+      <setBody><simple></simple></setBody>
+
+      <setHeader headerName="CamelHttpMethod">
+        <constant>POST</constant>
+      </setHeader>
+
+      <setHeader headerName="CamelHttpUri">
+        <simple>http://hydrus/delete_from_index/${headers.pid}</simple>
+      </setHeader>
+
+      <to uri="https4://purge-route-given-above" />
+    </route>
+
+    <route id="send_reindex_messages">
+      <from uri="activemq:hydrus.ReindexQueue?asyncConsumer=true&amp;destination.consumer.prefetchSize=50" />
+      <threads poolSize="4" maxPoolSize="4">
+        <to uri="direct:process_reindex_message" />
+      </threads>
+    </route>
+
+    <route id="send_background_reindex_messages">
+      <from uri="activemq:hydrus.BackgroundReindexQueue?asyncConsumer=true&amp;destination.consumer.prefetchSize=50" />
+      <threads poolSize="4" maxPoolSize="4">
+        <to uri="direct:process_reindex_message" />
+      </threads>
+    </route>
+
+    <route id="reindex_from_file">
+      <from uri="file:pids_to_reindex/hydrus" />
+      <split streaming="true">
+        <tokenize token="\n"/>
+        <setHeader headerName="pid">
+          <simple>${body}</simple>
+        </setHeader>
+        <to uri="activemq:hydrus.BackgroundReindexQueue" />
+      </split>
+    </route>
+
+    <route id="process_reindex_message">
+      <from uri="direct:process_reindex_message" />
+
+      <!-- Recommended to avoid information leakage -->
+      <removeHeaders pattern="Camel*"/>
+      <setBody><simple></simple></setBody>
+
+      <setHeader headerName="CamelHttpMethod">
+        <constant>POST</constant>
+      </setHeader>
+
+      <setHeader headerName="CamelHttpUri">
+        <simple>http://hydrus/reindex/${headers.pid}?commitWithin=10000</simple>
+      </setHeader>
+
+      <loadBalance>
+        <circuitBreaker threshold="10" halfOpenAfter="1000">
+          <exception>org.apache.camel.component.http4.HttpOperationFailedException</exception>
+        </circuitBreaker>
+        <to uri="https4://reindex-route-given-above?httpClient.socketTimeout=60000&amp;connectionsPerRoute=4" />
+      </loadBalance>
+    </route>
+
+    <route id="log_indexing_errors">
+      <from uri="activemq:queue:hydrus.ReindexQueueExceptions" />
+      <removeHeaders pattern="org.apache.camel.file.*" />
+      <removeHeaders pattern="Camel*" />
+      <transform>
+        <simple>${in.header.exceptionMessage}\n\n${in.body}</simple>
+      </transform>
+      <to uri="file:indexing_errors/hydrus" />
+    </route>
+  </camelContext>
+
+  <bean id="aggregatorStrategy" class="org.apache.camel.processor.aggregate.UseLatestAggregationStrategy"/>
+  <bean id="metricsRoutePolicyFactory" class="org.apache.camel.component.metrics.routepolicy.MetricsRoutePolicyFactory" />
+</blueprint>

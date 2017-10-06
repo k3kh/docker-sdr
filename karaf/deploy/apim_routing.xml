@@ -1,0 +1,98 @@
+<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0">
+  <camelContext id="apim-routing" streamCache="true" xmlns="http://camel.apache.org/schema/blueprint" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:access="http://www.fedora.info/definitions/1/0/access/">
+
+    <!-- Take a message from the fedora.apim.update topic and translate it into specific topics -->
+    <route id="translate_apim_update_to_simple_topics?maxConcurrentConsumers=8&amp;concurrentConsumers=8">
+      <from uri="activemq:topic:fedora.apim.update" />
+      <setHeader headerName="pid">
+        <xpath resultType="java.lang.String">//atom:category[@scheme="fedora-types:pid"]/@term|//atom:summary</xpath>
+      </setHeader>
+      <setHeader headerName="repository_url">
+        <xpath resultType="java.lang.String">//atom:author/atom:uri</xpath>
+      </setHeader>
+
+      <setHeader headerName="author">
+        <xpath resultType="java.lang.String">//atom:author/atom:name</xpath>
+      </setHeader>
+
+      <choice>
+        <when>
+          <simple>${header.author} contains 'argo'</simple>
+
+          <setHeader headerName="JMSPriority">
+            <constant>9</constant>
+          </setHeader>
+
+        </when>
+        <when>
+          <simple>${header.author} contains 'hydrus'</simple>
+
+          <setHeader headerName="JMSPriority">
+            <constant>9</constant>
+          </setHeader>
+
+        </when>
+        <when>
+          <xpath>//atom:title[text() = 'ingest']</xpath>
+
+          <setHeader headerName="JMSPriority">
+            <constant>6</constant>
+          </setHeader>
+
+        </when>
+      </choice>
+
+      <choice>
+        <when>
+          <simple>${header.repository_url} contains '-dev'</simple>
+          <setHeader headerName="DorHost">
+            <simple>edu.stanford.sul-dor-dev</simple>
+          </setHeader>
+        </when>
+
+        <when>
+          <simple>${header.repository_url} contains '-test'</simple>
+          <setHeader headerName="DorHost">
+            <simple>edu.stanford.sul-dor-test</simple>
+          </setHeader>
+        </when>
+
+        <when>
+          <simple>${header.repository_url} contains '-prod'</simple>
+          <setHeader headerName="DorHost">
+            <simple>edu.stanford.sul-dor-prod</simple>
+          </setHeader>
+        </when>
+        <otherwise>
+          <setHeader headerName="DorHost">
+            <simple>dor</simple>
+          </setHeader>
+        </otherwise>
+      </choice>
+
+      <choice>
+        <when>
+          <!-- route purge messages to the *.object.purged topic -->
+          <xpath>//atom:title[text() = 'purgeObject']</xpath>
+
+          <setHeader headerName="CamelJmsDestinationName">
+            <simple>VirtualTopic.${headers.DorHost}.object.purged</simple>
+          </setHeader>
+        </when>
+
+        <otherwise>
+          <setHeader headerName="CamelJmsDestinationName">
+            <simple>VirtualTopic.${headers.DorHost}.object.changed</simple>
+          </setHeader>
+        </otherwise>
+      </choice>
+
+      <to uri="activemq:topic:dummy?preserveMessageQos=true" />
+    </route>
+
+    <route id="queue_from_file">
+      <from uri="file:enqueue_messages/fedora_apim_update" />
+      <to uri="activemq:topic:fedora.apim.update" />
+    </route>
+  </camelContext>
+</blueprint>
