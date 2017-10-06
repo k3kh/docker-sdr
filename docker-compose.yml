@@ -132,14 +132,16 @@ services:
   dor_indexing_app:
     build: ./dor_indexing_app/
     environment:
-      SETTINGS__DOR_SERVICES_URL:
-      SETTINGS__FEDORA_URL:
+      SETTINGS__DOR_SERVICES_URL: http://dor-services-app/
+      SETTINGS__FEDORA_URL: http://fcrepo/fedora
       SETTINGS__SOLRIZER_URL: http://solr:8983/solr/argo
-      SETTINGS__WORKFLOW_URL:
+      SETTINGS__WORKFLOW_URL: http://workflow-service/
       VIRTUAL_HOST: dor_indexing_app.${VIRTUAL_HOST_DOMAIN}
     depends_on:
       - fcrepo
       - solr
+      - workflow-service
+      - dor-services-app
 
   argo-app:
     build: ./argo/

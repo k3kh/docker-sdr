@@ -17,3 +17,7 @@ RUN rm /etc/nginx/sites-enabled/default
 
 WORKDIR /home/app/webapp
 RUN bundle install
+ADD config.rb /home/app/webapp/config/initializers/config.rb
+RUN mv config/dor_config.rb config/initializers
+RUN touch config/dor_config.rb
+ADD settings.conf /etc/nginx/main.d/settings.conf
