@@ -19,3 +19,4 @@ RUN rm /etc/nginx/sites-enabled/default
 WORKDIR /home/app/webapp
 RUN bundle install
 RUN bundle exec rake assets:precompile SECRET_KEY_BASE=asdf
+ADD settings.conf /etc/nginx/main.d/settings.conf

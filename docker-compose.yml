@@ -229,7 +229,7 @@ services:
     environment:
       SETTINGS__DOCUMENT_CACHE_ROOT: /purl
       SETTINGS__PURL_RESOURCE__MODS: /purl/%{druid_tree}/mods
-      SETTINGS__PURL_RESOURCE__MODS: /purl/%{druid_tree}/public
+      SETTINGS__PURL_RESOURCE__PUBLIC_XML: /purl/%{druid_tree}/public
       SETTINGS__STACKS__URL: http://stacks.${VIRTUAL_HOST_DOMAIN}/
       SETTINGS__EMBED_HOST: http://sul-embed/
       SETTINGS__EMBED__URL: http://sul-embed.${VIRTUAL_HOST_DOMAIN}/%{druid}
